@@ -1,4 +1,4 @@
-# 🔥 pfSense Configuration (Step-by-Step)
+# 🔥 pfSense Configuration
 
 ## Overview
 
