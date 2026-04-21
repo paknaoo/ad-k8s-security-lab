@@ -1,3 +1,56 @@
+## Lab Topology
+
+```mermaid
+flowchart TB
+
+    %% Top layer
+    Internet["Internet"]
+
+    %% Firewall
+    pfSense["pfSense Firewall / Router"]
+
+    Internet -->|WAN| pfSense
+
+    %% VMware container
+    subgraph VMware["VMware Workstation Lab Environment"]
+        direction TB
+
+        %% Network segments (horizontal layout)
+        subgraph NETWORKS["Internal Networks"]
+            direction LR
+            MGMT["LAN-MGMT<br/>192.168.0.0/24"]
+            ATTACK["OPT1-ATTACK<br/>192.168.10.0/24"]
+            SERVERS["OPT2-SERVERS<br/>192.168.20.0/24"]
+            CLIENTS["OPT3-CLIENTS<br/>192.168.30.0/24"]
+            SECURITY["OPT4-SECURITY<br/>192.168.40.0/24"]
+            DMZ["OPT5-DMZ<br/>192.168.50.0/24<br/>Future use"]
+        end
+
+        %% Connections
+        pfSense -->|LAN| MGMT
+        pfSense -->|OPT1| ATTACK
+        pfSense -->|OPT2| SERVERS
+        pfSense -->|OPT3| CLIENTS
+        pfSense -->|OPT4| SECURITY
+        pfSense -->|OPT5| DMZ
+
+        %% Devices
+        ATTACK --> Kali["Kali Linux<br/>192.168.10.100"]
+        SERVERS --> AD["Windows Server AD<br/>corp.lab<br/>192.168.20.10"]
+        CLIENTS --> WinClient["Windows Client<br/>corp.lab<br/>192.168.30.100"]
+
+        %% Kubernetes
+        subgraph K8s["Kubernetes Cluster"]
+            direction TB
+            K8sMaster["k8s-Master<br/>192.168.20.20"]
+            K8sWorker1["k8s-Worker1<br/>192.168.20.21"]
+            K8sWorker2["k8s-Worker2<br/>192.168.20.22"]
+        end
+
+        SERVERS --> K8s
+    end
+```
+
 # 🌐 Network Topology
 
 ## Overview
