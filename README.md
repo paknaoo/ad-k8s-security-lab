@@ -45,6 +45,8 @@ pfSense
  └── OPT5  (DMZ - Load Balancer)
 ```
 
+- [Full Network Topology](docs/topology.md)
+
 ---
 
 ## 📡 IP Plan
