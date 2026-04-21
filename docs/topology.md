@@ -35,16 +35,17 @@ flowchart TB
         pfSense -->|OPT5| DMZ
 
         %% Devices
+        MGMT --> Ubuntu["Ubuntu Desktop<br/>192.168.0.100"]
         ATTACK --> Kali["Kali Linux<br/>192.168.10.100"]
-        SERVERS --> AD["Windows Server AD<br/>corp.lab<br/>192.168.20.10"]
+        SERVERS --> AD["Windows Server DC<br/>corp.lab<br/>192.168.20.10"]
         CLIENTS --> WinClient["Windows Client<br/>corp.lab<br/>192.168.30.100"]
 
         %% Kubernetes
         subgraph K8s["Kubernetes Cluster"]
             direction TB
-            K8sMaster["k8s-Master<br/>192.168.20.20"]
-            K8sWorker1["k8s-Worker1<br/>192.168.20.21"]
-            K8sWorker2["k8s-Worker2<br/>192.168.20.22"]
+            K8sMaster["Ubuntu Server<br/>k8s-Master<br/>192.168.20.20"]
+            K8sWorker1["Ubuntu Server<br/>k8s-Worker1<br/>192.168.20.21"]
+            K8sWorker2["Ubuntu Server<br/>k8s-Worker2<br/>192.168.20.22"]
         end
 
         SERVERS --> K8s
