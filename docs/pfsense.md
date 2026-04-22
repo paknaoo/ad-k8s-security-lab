@@ -2,16 +2,15 @@
 
 ## Overview
 
-pfSense is the central networking component of this lab and acts as the primary control plane for all network communication.
+pfSense is the central firewall and router in this lab.
 
-It is responsible for:
+It handles:
+- routing between networks
+- firewall rules
+- DHCP services
+- DNS forwarding to Active Directory
 
-* routing between network segments
-* enforcing firewall policies
-* providing DHCP services
-* forwarding DNS traffic to Active Directory
-
-All inter-network communication is inspected and controlled here, making pfSense the core security layer of the environment.
+All traffic between networks passes through pfSense, which allows controlled and secure communication between segments.
 
 ---
 
@@ -19,12 +18,11 @@ All inter-network communication is inspected and controlled here, making pfSense
 
 ### 1. Installation
 
-* pfSense deployed as a virtual machine in VMware Workstation
-* Multiple virtual NICs assigned:
-
-  * WAN (external access)
-  * LAN (management)
-  * OPT1–OPT5 (segmented internal networks)
+- pfSense deployed as a virtual machine in VMware Workstation
+- Multiple virtual NICs assigned:
+  - WAN (external access)
+  - LAN (management)
+  - OPT1–OPT5 (segmented internal networks)
 
 ---
 
@@ -32,97 +30,88 @@ All inter-network communication is inspected and controlled here, making pfSense
 
 Each VMware virtual network is mapped to a dedicated pfSense interface.
 
-| Interface | Role            | Subnet          |
-| --------- | --------------- | --------------- |
-| WAN       | Internet access | DHCP            |
-| LAN       | MGMT            | 192.168.0.0/24  |
-| OPT1      | ATTACK          | 192.168.10.0/24 |
-| OPT2      | SERVERS         | 192.168.20.0/24 |
-| OPT3      | CLIENTS         | 192.168.30.0/24 |
-| OPT4      | SECURITY        | 192.168.40.0/24 |
-| OPT5      | DMZ             | 192.168.50.0/24 |
+| Interface | Role     | Subnet          |
+|----------|----------|-----------------|
+| WAN      | Internet | DHCP            |
+| LAN      | MGMT     | 192.168.0.0/24  |
+| OPT1     | ATTACK   | 192.168.10.0/24 |
+| OPT2     | SERVERS  | 192.168.20.0/24 |
+| OPT3     | CLIENTS  | 192.168.30.0/24 |
+| OPT4     | SECURITY | 192.168.40.0/24 |
+| OPT5     | DMZ      | 192.168.50.0/24 |
 
-Due to VMware Workstation limitations, segmentation is implemented using **separate virtual networks instead of VLAN tagging**.
+Segmentation is implemented using separate VMware networks (no VLANs).
 
 ---
 
 ## 🌐 Interface Configuration
 
-Each internal interface is configured with a static gateway IP:
+Each interface uses a static gateway IP:
 
-* LAN → 192.168.0.254
-* OPT1 → 192.168.10.254
-* OPT2 → 192.168.20.254
-* OPT3 → 192.168.30.254
-* OPT4 → 192.168.40.254
-* OPT5 → 192.168.50.254
+- LAN → 192.168.0.254  
+- OPT1 → 192.168.10.254  
+- OPT2 → 192.168.20.254  
+- OPT3 → 192.168.30.254  
+- OPT4 → 192.168.40.254  
+- OPT5 → 192.168.50.254  
 
-WAN interface obtains IP via DHCP.
+WAN uses DHCP.
 
 ---
 
-## 🔐 Management Access Control
+## 🔐 Management Access
 
-Administrative access to the pfSense web interface is restricted exclusively to the MGMT network.
+Access to the pfSense web interface is restricted to the MGMT network only.
 
-* Allowed: `192.168.0.0/24`
-* Denied: all other networks
+- Allowed: 192.168.0.0/24  
+- Denied: all other networks  
 
-This enforces a dedicated management plane and reduces the attack surface.
+This keeps management access separate from the rest of the lab.
 
 ---
 
 ## 📡 DHCP Configuration
 
-### Dynamic Address Pools
+### Dynamic Ranges
 
-#### ATTACK (OPT1)
+**ATTACK (OPT1)**  
+- Range: 192.168.10.100–200  
+- Client: Kali Linux  
 
-* Range: `192.168.10.100–200`
-* Client: Kali Linux
-
-#### CLIENTS (OPT3)
-
-* Range: `192.168.30.100–200`
-* Client: Windows 11
+**CLIENTS (OPT3)**  
+- Range: 192.168.30.100–200  
+- Client: Windows 11  
 
 ---
 
-### Static Mappings (Servers)
+### Static Addresses (Servers)
 
-Critical infrastructure uses static addressing:
+Key systems use static IPs:
 
-* Domain Controller (AD/DNS) → `192.168.20.10`
-* Kubernetes Control Plane → `192.168.20.20`
-* Kubernetes Workers → `192.168.20.21–22`
-
-This ensures consistent service discovery and stable DNS records.
+- Domain Controller (AD/DNS) → 192.168.20.10  
+- Kubernetes Master → 192.168.20.20  
+- Kubernetes Workers → 192.168.20.21–22  
 
 ---
 
 ## 🌍 DNS Configuration
 
-pfSense acts as a DNS forwarder and delegates resolution to Active Directory.
+pfSense forwards DNS queries to Active Directory.
 
-* Domain: `corp.lab`
-* DNS Server: `192.168.20.10`
+- Domain: corp.lab  
+- DNS Server: 192.168.20.10  
 
-### Behavior
+Clients receive via DHCP:
+- DNS server (AD)
+- domain suffix (corp.lab)
 
-* DHCP clients receive:
-
-  * DNS server (AD)
-  * domain suffix (`corp.lab`)
-
-* Internal name resolution is handled entirely by AD DNS
-
-This mirrors real enterprise environments where identity and DNS are tightly coupled.
+All internal name resolution is handled by AD.
 
 ---
 
-## 🔥 Firewall Policy Design
+# 🔥 Firewall Policy
 
-### Default Policy
+## Default Rule
 
 **Deny all traffic by default**
 
@@ -130,120 +119,147 @@ All communication between networks must be explicitly allowed.
 
 ---
 
-## 🔐 Interface Rules
+## 🔐 Network Rules
 
 ### 🟢 MGMT (LAN)
 
-* Full administrative access to all networks
-* Allowed protocols:
+Management network used for administration.
 
-  * SSH (22)
-  * RDP (3389)
-  * HTTPS (443)
-* Used as the only trusted management zone
+Allowed:
+- SSH (22)
+- RDP (3389)
+- HTTPS (443)
+- WinRM (5985, 5986)
+- ICMP
+
+Notes:
+- This is the only trusted admin network
 
 ---
 
 ### 🟡 SERVERS (OPT2)
 
-* Accept inbound traffic only from:
+Network for core services:
+- Active Directory
+- Kubernetes cluster
+- internal applications
 
-  * MGMT
-  * CLIENTS (limited services)
+Rules:
+- Allow management access from MGMT
+- Allow required access from CLIENTS
+- Allow communication between servers (e.g. Kubernetes)
 
-* Block unsolicited traffic from ATTACK network
+Blocked:
+- direct access from ATTACK (unless allowed for testing)
+- unnecessary access from other networks
 
 ---
 
 ### 🔵 CLIENTS (OPT3)
 
-Allowed access to core infrastructure services:
+User network with limited access.
 
-* **Active Directory services:**
+Allowed:
 
-  * DNS (53) – domain resolution
-  * Kerberos (88) – authentication
-  * LDAP (389) – directory services
-  * SMB (445) – domain resources and policies
+**To Domain Controller (192.168.20.10):**
+- DNS (53)
+- Kerberos (88)
+- LDAP (389)
+- SMB (445)
+- RPC (135)
+- Kerberos password (464)
+- Global Catalog (3268, 3269)
+- WinRM (5985, 5986)
 
-* Limited access to internal applications (e.g. Kubernetes services)
+**To internal services:**
+- HTTP/HTTPS (80/443) to selected applications (e.g. Kubernetes ingress)
+
+Blocked:
+- full access to server subnet
+- access to MGMT network
 
 ---
 
 ### 🔴 ATTACK (OPT1)
 
-Designed as an untrusted testing zone:
+Untrusted testing network.
 
-* Allowed:
+Allowed:
+- internet access (updates, tools)
+- ICMP
+- HTTP/HTTPS
+- DNS (to approved server)
 
-  * outbound traffic for reconnaissance and testing
+Restricted:
+- no access to MGMT
+- no direct access to CLIENTS
 
-* Restricted:
-
-  * no access to MGMT network
-  * no direct access to CLIENTS
-
-* Controlled access to SERVERS for security testing (e.g. Nmap scans)
+Controlled:
+- limited access to SERVERS for testing (e.g. scans)
 
 ---
 
 ### 🟣 SECURITY (OPT4)
 
-* Reserved for future monitoring stack
-* No active rules yet
+Reserved for future use:
+- monitoring
+- logging
+- security tools
+
+No rules configured yet.
 
 ---
 
 ### ⚫ DMZ (OPT5)
 
-* Fully isolated by default
-* Intended for future public-facing services
+Reserved for future public services.
+
+- isolated by default
+- no active rules
 
 ---
 
-## 🔄 Connectivity Validation
+## 🔄 Testing
 
-After configuration, network functionality was verified.
+### Connectivity
 
-### Network Reachability
-
-* MGMT → all networks ✔
-* CLIENTS → Domain Controller ✔
-* ATTACK → SERVERS (controlled) ✔
+- MGMT → all networks ✔  
+- CLIENTS → Domain Controller ✔  
+- ATTACK → SERVERS (controlled) ✔  
 
 ---
 
-### DNS Resolution
+### DNS
 
-* `corp.lab` successfully resolved via AD DNS ✔
-
----
-
-## 📸 Snapshot Strategy
-
-Snapshots were created after each major configuration step:
-
-* initial installation
-* interface setup
-* DHCP configuration
-* firewall rule implementation
-
-This enables safe rollback during testing and experimentation.
+- corp.lab resolves correctly via AD ✔  
 
 ---
 
-## 🧠 Key Design Decisions
+## 📸 Snapshots
 
-* Segmentation enforced at interface level (no VLANs)
-* Centralized traffic control via pfSense
-* Default deny security model
-* Dedicated management network
-* Active Directory used as authoritative DNS
+Snapshots were taken after:
+- installation
+- interface setup
+- DHCP setup
+- firewall rules
+
+This allows easy rollback during testing.
+
+---
+
+## 🧠 Key Design Choices
+
+- separate networks instead of VLANs
+- pfSense as central firewall
+- default deny between networks
+- dedicated management network
+- AD used for DNS
+- WinRM enabled for remote management
 
 ---
 
 ## ⚠️ Summary
 
-pfSense acts as the backbone of the lab's network architecture.
+pfSense controls all traffic between networks in this lab.
 
-It enforces segmentation, controls traffic flow, and ensures that all communication between systems is intentional, auditable, and aligned with security best practices.
+It enforces segmentation and ensures that communication between systems is limited to what is actually needed.
