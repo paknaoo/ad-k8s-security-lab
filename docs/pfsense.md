@@ -134,7 +134,7 @@ Allowed:
 
 Notes:
 - This is the only trusted admin network
-
+![MGMT firewall rules](screenshots/pfsense/03-pfsense-lan-rules.png)
 ---
 
 ### 🟡 SERVERS (OPT2)
