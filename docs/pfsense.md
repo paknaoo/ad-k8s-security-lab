@@ -152,8 +152,7 @@ Rules:
 - Allow communication between servers (e.g. Kubernetes)
 
 Blocked:
-- direct access from ATTACK (unless allowed for testing)
-- unnecessary access from other networks
+- access to pfSense GUI
 
 ![SERVERS firewall rules](screenshots/pfsense/05-pfsense-opt2-rules.png)
 
@@ -181,6 +180,7 @@ Allowed:
 Blocked:
 - full access to server subnet
 - access to MGMT network
+- access to pfSense GUI
 
 ![CLIENTS firewall rules](screenshots/pfsense/06-pfsense-opt3-rules.png)
 
@@ -202,6 +202,9 @@ Restricted:
 
 Controlled:
 - limited access to SERVERS for testing (e.g. scans)
+
+Blocked:
+- access to pfSense GUI
 
 ![ATTACK firewall rules](screenshots/pfsense/04-pfsense-opt1-rules.png)
 
