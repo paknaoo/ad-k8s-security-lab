@@ -234,15 +234,15 @@ Reserved for future public services.
 
 ### Connectivity
 
-- MGMT → all networks ✔  
-- CLIENTS → Domain Controller ✔  
-- ATTACK → SERVERS (controlled) ✔  
+- MGMT → all networks  
+- CLIENTS → Domain Controller
+- ATTACK → SERVERS (controlled) 
 
 ---
 
 ### DNS
 
-- corp.lab resolves correctly via AD ✔  
+- corp.lab resolves correctly via AD 
 
 ---
 
