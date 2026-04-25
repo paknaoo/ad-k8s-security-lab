@@ -155,7 +155,7 @@ Blocked:
 - direct access from ATTACK (unless allowed for testing)
 - unnecessary access from other networks
 
-![SERVERS firewall rules](screenshots/pfsense/04-pfsense-opt1-rules.png
+![SERVERS firewall rules](screenshots/pfsense/05-pfsense-opt2-rules.png)
 
 ---
 
@@ -182,7 +182,7 @@ Blocked:
 - full access to server subnet
 - access to MGMT network
 
-![CLIENTS firewall rules](screenshots/pfsense/05-pfsense-opt2-rules.png)
+![CLIENTS firewall rules](screenshots/pfsense/06-pfsense-opt3-rules.png)
 
 ---
 
@@ -203,7 +203,7 @@ Restricted:
 Controlled:
 - limited access to SERVERS for testing (e.g. scans)
 
-![ATTACK firewall rules](screenshots/pfsense/06-pfsense-opt3-rules.png)
+![ATTACK firewall rules](screenshots/pfsense/04-pfsense-opt1-rules.png)
 
 ---
 
