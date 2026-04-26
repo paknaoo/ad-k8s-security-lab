@@ -18,7 +18,7 @@ The setup is designed to reflect a small but realistic enterprise environment, w
 
 ### Server Details
 
-* Hostname: `DC01`
+* Hostname: `WinServerLAB`
 * Role: Domain Controller + DNS Server
 * IP Address: `192.168.20.10`
 * Network: SERVERS (OPT2)
