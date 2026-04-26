@@ -1,272 +1,208 @@
-# 🛡️ Security & Network Testing
-
-## Overview
+🛡️ Security & Network Testing
+Overview
 
 This lab includes a dedicated ATTACK network used to simulate basic offensive security scenarios and validate network segmentation.
 
 The goal is not full penetration testing, but rather:
 
-* verifying firewall rules
-* testing network exposure
-* understanding how services are visible across segments
+verifying firewall rules
+testing network exposure
+understanding how services are visible across segments
 
 Kali Linux is used as the primary testing host.
 
----
-
-## 🧱 Security Model
+🧱 Security Model
 
 The environment follows a segmented architecture:
 
-* **MGMT** → trusted (administration)
-* **SERVERS** → critical infrastructure
-* **CLIENTS** → user layer
-* **ATTACK** → untrusted / hostile
-* **SECURITY** → monitoring (planned)
-* **DMZ** → external services (planned)
+MGMT → trusted (administration)
+SERVERS → critical infrastructure
+CLIENTS → user layer
+ATTACK → untrusted / hostile
 
 All traffic between these networks is controlled by pfSense.
 
----
-
-## 🎯 Testing Objectives
-
-Security testing focused on:
-
-* verifying that only required services are exposed
-* confirming that sensitive networks are isolated
-* validating firewall rules in real conditions
-* identifying potential attack paths
-
----
-
-## ⚔️ Attack Simulation Environment
-
-### Kali Linux (ATTACK Network)
-
-* IP: `192.168.10.100`
-* Role: simulated attacker
+⚔️ Attack Simulation Environment
+Kali Linux (ATTACK Network)
+IP: 192.168.10.100
+Role: simulated attacker
 
 This host is treated as an untrusted system with limited permissions.
 
----
+🔍 Scan Methodology
 
-## 🔍 Network Scanning (Nmap)
+All tests were performed using Nmap.
 
-Basic reconnaissance was performed against the SERVERS network.
+Scan Command
+nmap -sS -sV -O -oX scan.xml <targets>
+Purpose
+SYN scan (-sS) → stealth port scanning
+service detection (-sV)
+OS fingerprinting (-O)
+XML output for structured analysis
 
----
+📊 Baseline Scan (Before Firewall Hardening)
 
-### 1. Host Discovery
+![nmap scan2](screenshots/security/02-kali-nmap-scan-report.png)
 
-```bash id="7wt3j8"
-nmap -sn 192.168.20.0/24
-```
+Key Findings
 
-Purpose:
+🌐 Host Visibility
 
-* identify active hosts
-* map the network
+Multiple subnets visible from ATTACK network
+Hosts detected across MGMT, CLIENTS and SERVERS ranges
 
----
+👉 Indicates broad network visibility
 
-### 2. Service Detection
+🖥️ OS Detection
 
-```bash id="3l1p0p"
-nmap -sV 192.168.20.0/24
-```
+IP	OS
+192.168.x.254	FreeBSD (firewall)
+192.168.20.10	Windows Server 2022
+192.168.30.100	Windows 8.1
 
-Purpose:
+👉 Multiple systems fingerprintable → information leakage
 
-* detect running services
-* identify open ports
+🔌 Service Exposure
 
----
+Firewall interfaces (multiple networks):
 
-### 3. OS Detection
+port 53 → DNS (Unbound)
+port 80 → HTTP (nginx)
+port 443 → HTTPS (nginx)
 
-```bash id="4p2rcp"
-nmap -O 192.168.20.10
-```
+Domain Controller:
 
-Purpose:
+port 53 → DNS (Simple DNS Plus)
 
-* identify operating system (e.g. Windows Server)
+Other hosts:
 
----
+ports mostly closed
 
-### 4. Full Scan
+⚠️ Interpretation
 
-```bash id="jjhkhf"
-nmap -A 192.168.20.0/24
-```
+Firewall exposes web interface (80/443) across networks
+Client network (Windows 8.1) is visible
+Multiple subnets reachable from ATTACK
 
-Purpose:
+👉 This increases the attack surface and reconnaissance capability
 
-* combined scan (services, OS, scripts)
-* deeper reconnaissance
+🔥 Scan After Firewall Hardening
 
----
+![nmap scan2](screenshots/security/03-kali-nmap-scan-report2.png)
 
-### 5. Full Port Scan (Kubernetes Node)
+Key Findings
 
-```bash id="l0n4hj"
-nmap -p- 192.168.20.20
-```
+🌐 Host Visibility
 
-Purpose:
+Only selected hosts visible:
+192.168.10.x
+192.168.20.x
 
-* detect all open ports
-* identify exposed services on cluster nodes
+👉 Reduced network exposure
 
----
+🔌 Service Exposure
 
-### 6. Vulnerability Scan (NSE)
+Firewall:
 
-```bash id="u7k3ka"
-nmap --script vuln 192.168.20.0/24
-```
+port 53 → DNS
+port 80 → HTTP
+port 443 → no longer exposed
 
-Purpose:
+Domain Controller:
 
-* run vulnerability detection scripts
-* identify known weaknesses and misconfigurations
+port 53 remains accessible
 
----
+Other hosts:
 
-### 7. HTTP Enumeration (NSE)
+all tested ports closed
 
-```bash id="y1mkcb"
-nmap --script http-title,http-enum,http-headers nginx.corp.lab
-```
+🖥️ OS Detection
 
-Purpose:
+Fewer systems fingerprintable
+Client systems no longer visible
 
-* retrieve webpage titles
-* enumerate common directories and endpoints
-* analyse HTTP response headers
+👉 Reduced information disclosure
 
----
+📉 Before vs After Comparison
 
-### 8. Web Service Testing
+Category	Before Hardening	After Hardening
+Visible Networks	Multiple	Limited
+Client Visibility	Yes	No
+Firewall HTTPS (443)	Exposed	Removed
+OS Fingerprinting	Multiple hosts	Limited
+Attack Surface	Higher	Reduced
 
-```bash id="m5l1o2"
-nmap -p 80,443 nginx.corp.lab
-```
+🌐 DNS Validation
 
-Purpose:
+DNS behaviour remained consistent across both scans.
 
-* verify application exposure
-* confirm DNS resolution works correctly
+Observations
+Domain Controller (192.168.20.10) responds to DNS queries
+No other hosts act as DNS servers
+DNS is centrally managed
 
----
+Required services remain accessible after hardening
 
-## 🌐 DNS Testing (dig)
+Evidence-Based Conclusions
 
-DNS resolution was tested directly against internal hosts using `dig`.
+Based on scan results:
 
-### Domain Controller
+What Improved
+Reduced number of visible networks
+Removal of HTTPS exposure on firewall
+Elimination of client network visibility
+Lower OS fingerprinting success
+What Remains Accessible (by design)
+DNS service on Domain Controller
+DNS resolver on firewall
 
-```bash id="9k7r5o"
-dig @192.168.20.10 corp.lab
-```
+⚠️ What This Means
 
-### Kubernetes Node
+From an attacker perspective:
 
-```bash id="3q0p9m"
-dig @192.168.20.20 corp.lab
-```
+Before:
 
-### Observations
+can map multiple networks
+sees firewall services (nginx)
+identifies client OS
+gains high-level infrastructure awareness
 
-* Domain Controller correctly responds to DNS queries ✔
-* Kubernetes node does not act as a DNS server (expected behaviour) ✔
-* Internal domain resolution is handled centrally by Active Directory
+After:
 
-This confirms that DNS is properly centralised and not distributed across infrastructure nodes.
+limited to minimal infrastructure visibility
+cannot identify client systems
+reduced ability to fingerprint environment
 
----
+🔐 Security Principles Observed
 
-## 🔐 Findings & Observations
+Network Segmentation
 
-### 1. Network Segmentation
+Visibility between networks is restricted after firewall changes.
 
-* MGMT network is not reachable from ATTACK ✔
-* CLIENTS network is isolated ✔
-* Access is only possible where explicitly allowed
+Least Privilege
 
----
+Only required services (DNS) remain accessible.
 
-### 2. Service Exposure
+Reduced Attack Surface
 
-* Only the Domain Controller exposes expected services (e.g. DNS – port 53)
+Unnecessary services (e.g. HTTPS on firewall) were removed.
 
-* Other hosts in the SERVERS network either:
+📌 Final Summary
 
-  * do not expose services externally
-  * or are filtered by firewall rules
+This lab demonstrates how firewall configuration in pfSense directly impacts network visibility and attack surface.
 
-* No unnecessary open ports detected across the network
+Using Nmap as a validation tool:
 
-This confirms that service exposure is minimal and aligned with the security design.
+baseline scans revealed excessive exposure
+firewall hardening significantly reduced visibility
+required services remained functional
 
----
+The results confirm that segmentation and rule tuning effectively improve security posture in a controlled lab environment.
 
-### 3. DNS Behaviour
+🚧 Future Improvements
 
-* Internal domain (`corp.lab`) resolves correctly
-* Services accessible via DNS instead of IP
-
----
-
-### 4. Controlled Access
-
-* ATTACK network can scan SERVERS (intentionally allowed)
-* Sensitive management interfaces remain protected
-
----
-
-## 🧠 Security Approach
-
-The lab follows basic security principles:
-
-### Network Segmentation
-
-Each network has a clearly defined role and trust level.
-
----
-
-### Least Privilege
-
-Traffic is denied by default and only allowed when required.
-
----
-
-### Controlled Exposure
-
-Only necessary services are accessible between networks.
-
----
-
-### Separation of Concerns
-
-Infrastructure, users, and testing environments are isolated.
-
----
-
-## 🚧 Future Improvements
-
-Planned enhancements:
-
-* Wazuh (SIEM) deployment
-* Zabbix monitoring
-* centralised logging
-* alerting and incident detection
-
----
-
-## 📌 Summary
-
-Security in this lab is based on segmentation, controlled access, and validation through testing.
-
-By combining pfSense firewall rules with active scanning from the ATTACK network, the environment provides a practical way to understand how infrastructure behaves under basic reconnaissance and how well it is protected.
+SIEM integration (Wazuh)
+monitoring (Zabbix)
+centralised logging
+alerting and detection
