@@ -168,15 +168,15 @@ This verifies that the Windows client is correctly joined to the domain.
 
 ### Domain Controller
 
-![AD setup](screenshots/ad/ad-dc.png)
+![AD setup](screenshots/ad/01-ad-resolve-dnsname.png)
 
 ### DNS Configuration
 
-![DNS records](screenshots/ad/dns.png)
+![DNS records](screenshots/ad/02-ad-test-netconnection.png)
 
 ### Client Validation
 
-![client validation](screenshots/ad/client-validation.png)
+![client validation](screenshots/ad/03-ad-test-computersecurechannel.png)
 
 ---
 
