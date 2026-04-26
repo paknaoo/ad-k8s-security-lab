@@ -72,7 +72,7 @@ DNS is integrated with Active Directory and acts as the primary name resolution 
 
 ### Example Records
 
-* `dc01.corp.lab` → 192.168.20.10
+* `WinServerLAB.corp.lab` → 192.168.20.10
 * `nginx.corp.lab` → Kubernetes service / ingress
 
 ---
