@@ -259,10 +259,14 @@ kubectl get ingress
 
 Verified:
 
-* nodes joined successfully ✔
-* pods running on workers ✔
-* service reachable ✔
-* ingress resolving via DNS ✔
+* nodes joined successfully
+* pods running on workers
+* service reachable
+* ingress resolving via DNS
+
+![k8s nodes/pods](screenshots/kubernetes/01-k8s-nodes-pods-services.png)
+
+![k8s nodes/pods](screenshots/kubernetes/02-nginx-ingress.png)
 
 ---
 
