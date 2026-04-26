@@ -1,234 +1,210 @@
-# 🪟 Active Directory & DNS Configuration
+# 🪟 Active Directory & DNS
 
 ## Overview
 
-Active Directory (AD) is deployed as the central identity service for the lab environment.
+Active Directory is deployed as the central identity and DNS service in the lab.
 
 It provides:
 
-* authentication (users and devices)
-* authorisation (group-based access control)
-* DNS for internal name resolution
-
-The setup is designed to reflect a small but realistic enterprise environment, with structured organisation and centralised management.
+- authentication (users and devices)
+- DNS for internal name resolution
+- basic group-based access control
 
 ---
 
-## 🧱 Environment Setup
+## 🧱 Environment
 
-### Server Details
+### Domain Controller
 
-* Hostname: `WinServerLAB`
-* Role: Domain Controller + DNS Server
-* IP Address: `192.168.20.10`
-* Network: SERVERS (OPT2)
+- **Hostname:** `WinServerLAB`
+- **Role:** Domain Controller and DNS Server
+- **IP Address:** `192.168.20.10`
+- **Network:** `SERVERS`
 
----
+### Domain
 
-### Domain Configuration
-
-* Domain Name: `corp.lab`
-* NetBIOS Name: `CORP`
-
-The domain acts as the central authority for:
-
-* user authentication
-* device management
-* internal DNS
+- **Domain Name:** `corp.lab`
+- **NetBIOS Name:** `CORP`
 
 ---
 
-## ⚙️ Active Directory Installation
+## ⚙️ Setup Summary
 
-### Steps Performed
+The Active Directory environment was configured with the following steps:
 
-1. Installed Windows Server
-2. Assigned static IP address
-3. Installed **Active Directory Domain Services (AD DS)** role
-4. Promoted server to Domain Controller
-5. Created a new forest: `corp.lab`
-
----
-
-## 🌍 DNS Configuration
-
-DNS is integrated with Active Directory and acts as the primary name resolution system.
-
-### Configured Components
-
-* Forward Lookup Zone:
-
-  * `corp.lab`
-
-* Reverse Lookup Zone:
-
-  * `192.168.20.0/24`
-
-* DNS Forwarder:
-
-  * external DNS (via pfSense / WAN)
+1. Installed Windows Server.
+2. Assigned a static IP address.
+3. Installed the Active Directory Domain Services role.
+4. Promoted the server to a Domain Controller.
+5. Created a new forest: `corp.lab`.
 
 ---
+
+## 🌐 DNS Configuration
+
+DNS is integrated with Active Directory and provides internal name resolution for the lab.
+
+### Zones
+
+- **Forward Lookup Zone:** `corp.lab`
+- **Reverse Lookup Zone:** `192.168.20.0/24`
 
 ### Example Records
 
-* `WinServerLAB.corp.lab` → 192.168.20.10
-* `nginx.corp.lab` → Kubernetes service / ingress
-
----
+| Record | Target |
+|---|---|
+| `WinServerLAB.corp.lab` | `192.168.20.10` |
+| `nginx.corp.lab` | Kubernetes ingress / service endpoint |
 
 ### Behaviour
 
-* All domain-joined clients use AD DNS
-* Internal services are resolved using domain names
-* External queries are forwarded upstream
+- Domain clients use Active Directory DNS.
+- Internal services are resolved using domain names.
+- External DNS queries are forwarded upstream through pfSense.
 
 ---
 
-## 🏢 Organisational Unit (OU) Structure
+## 🏢 OU Structure
 
-The directory is structured to reflect typical enterprise practices.
+The directory is organised into a simple enterprise-style structure:
 
-### OUs Created
+- `Admins`
+- `Users`
+- `Clients`
+- `Servers`
+- `Groups`
 
-* **Admins**
-* **Users**
-* **Clients**
-* **Servers**
-* **Groups**
+### Default Object Placement
 
----
+Default object placement was adjusted to keep the directory organised:
 
-### Default Object Placement (Redirection)
+- New users are placed in `OU=Users`.
+- New computers are placed in `OU=Clients`.
 
-By default, Active Directory places new objects in:
-
-* `CN=Users`
-* `CN=Computers`
-
-This was changed to improve organisation and policy management.
-
-### Configuration Applied
-
-* New **user accounts** are automatically placed in:
-
-  * `OU=Users`
-
-* New **computer objects** are automatically placed in:
-
-  * `OU=Clients`
-
-This ensures that:
-
-* Group Policies can be applied consistently
-* Objects are organised from the moment they are created
-* No manual cleanup is required
+This makes Group Policy assignment and object management easier.
 
 ---
 
-## 👤 Users & Groups
+## 👤 Users and Groups
 
-### Users
-
-* Test user accounts created for authentication and validation
-
-### Groups
-
-* Used to organise permissions and simulate role-based access
-
-This allows:
-
-* cleaner access control
-* easier policy assignment
+- Test users were created for authentication validation.
+- Groups were created for basic role-based access control.
 
 ---
 
-## 💻 Domain Join Process
+## 💻 Domain Join
 
-### Windows 11 Client
+### Windows Client
 
-* Host renamed
-* Joined to domain: `corp.lab`
+A Windows client was joined to the domain:
 
-### Validation
-
-* Login using domain credentials
-* DNS resolution working
-* Communication with Domain Controller verified
+- **Domain:** `corp.lab`
+- **Validation:** login using domain credentials works
 
 ---
 
-## 🔐 Group Policy Configuration
+## 🔐 Group Policy: WinRM
 
-### WinRM Configuration
+WinRM was enabled through Group Policy to support remote management.
 
-WinRM was enabled via Group Policy to allow remote management.
+Configured items:
 
-Configured settings:
-
-* Enable WinRM service
-* Allow remote connections
-* Configure trusted hosts
+- enable WinRM service
+- allow remote connections
+- configure trusted hosts
 
 ---
 
-## 🔄 Integration with Network
+## 🔗 Integration with the Lab
 
-Active Directory is integrated with the rest of the lab:
+Active Directory is integrated with other lab components:
 
-### pfSense
-
-* Forwards DNS queries to AD
-
-### Clients
-
-* Authenticate against AD
-* Use AD DNS for name resolution
-
-### Kubernetes
-
-* Internal services registered in DNS `nginx.corp.lab`
+- **pfSense** forwards DNS queries to Active Directory.
+- **Clients** authenticate against Active Directory and use AD DNS.
+- **Kubernetes** services can be accessed using internal DNS records such as `nginx.corp.lab`.
 
 ---
 
-## 🔍 Validation & Testing
+## 🔍 Validation and Testing
 
-### Authentication
+### Client to Domain Controller Communication
 
-* Domain login successful
+#### 1. DNS Resolution
 
-### DNS
+~~~powershell
+Resolve-DnsName corp.lab
+Resolve-DnsName nginx.corp.lab
+~~~
 
-* Internal name resolution working
+This verifies that the client can resolve internal domain records.
 
-### Connectivity
+#### 2. Connectivity to Key AD Services
 
-* Client ↔ Domain Controller communication verified
+~~~powershell
+Test-NetConnection 192.168.20.10 -Port 53
+Test-NetConnection 192.168.20.10 -Port 389
+Test-NetConnection 192.168.20.10 -Port 445
+~~~
+
+This validates communication with key services:
+
+| Port | Service | Purpose |
+|---:|---|---|
+| 53 | DNS | name resolution |
+| 389 | LDAP | directory communication |
+| 445 | SMB | domain communication and policies |
+
+#### 3. Domain Trust / Secure Channel
+
+~~~powershell
+Test-ComputerSecureChannel -Verbose
+~~~
+
+This verifies that the Windows client is correctly joined to the domain.
+
+---
+
+## 📸 Screenshots
+
+### Domain Controller
+
+![AD setup](screenshots/ad/ad-dc.png)
+
+### DNS Configuration
+
+![DNS records](screenshots/ad/dns.png)
+
+### Client Validation
+
+![client validation](screenshots/ad/client-validation.png)
 
 ---
 
 ## 🧠 Key Design Decisions
 
-* Single Domain Controller (kept simple due to hardware limits)
-* AD-integrated DNS for realistic behaviour
-* Organised OU structure from the start
-* Automatic placement of users and computers into OUs
-* Centralised authentication model
+- Single Domain Controller for lab simplicity.
+- AD-integrated DNS for realistic internal name resolution.
+- Structured OU layout from the beginning.
+- Centralised authentication for users and devices.
 
 ---
 
 ## ⚠️ Limitations
 
-* Single DC (no redundancy)
-* No replication or failover
-* Simplified Group Policy setup
-
-These trade-offs were made due to hardware constraints.
+- Single Domain Controller, no redundancy.
+- No replication or failover.
+- Minimal Group Policy setup.
 
 ---
 
 ## 📌 Summary
 
-Active Directory acts as the identity backbone of the lab.
+Active Directory acts as the central identity and DNS system in the lab.
 
-It centralises authentication, provides DNS resolution, and enables structured management of users and devices — closely reflecting how enterprise environments are designed and operated.
+Validation confirms that:
+
+- domain authentication works
+- DNS resolution is correct
+- client to Domain Controller communication is functional
+
+The setup reflects a simplified but realistic enterprise environment.
