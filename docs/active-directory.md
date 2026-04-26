@@ -152,9 +152,9 @@ This allows:
 
 ### Validation
 
-* Login using domain credentials ✔
-* DNS resolution working ✔
-* Communication with Domain Controller verified ✔
+* Login using domain credentials
+* DNS resolution working
+* Communication with Domain Controller verified
 
 ---
 
