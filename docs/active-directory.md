@@ -187,7 +187,7 @@ Active Directory is integrated with the rest of the lab:
 
 ### Kubernetes
 
-* Internal services registered in DNS (e.g. `nginx.corp.lab`)
+* Internal services registered in DNS `nginx.corp.lab`
 
 ---
 
