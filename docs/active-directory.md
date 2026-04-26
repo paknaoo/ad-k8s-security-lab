@@ -195,15 +195,15 @@ Active Directory is integrated with the rest of the lab:
 
 ### Authentication
 
-* Domain login successful ✔
+* Domain login successful
 
 ### DNS
 
-* Internal name resolution working ✔
+* Internal name resolution working
 
 ### Connectivity
 
-* Client ↔ Domain Controller communication verified ✔
+* Client ↔ Domain Controller communication verified
 
 ---
 
