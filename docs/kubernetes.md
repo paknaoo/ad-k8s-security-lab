@@ -253,16 +253,16 @@ This allows access using a domain name instead of an IP address.
 ```bash
 kubectl get nodes
 kubectl get pods -A
-kubectl get svc
-kubectl get ingress
+curl -H "Host: nginx.corp.lab" http://192.168.20.21:30948
 ```
 
 Verified:
 
 * nodes joined successfully
-* pods running on workers
-* service reachable
-* ingress resolving via DNS
+* pods running on worker nodes
+* service reachable via NodePort
+* DNS resolution works for internal domain (nginx.corp.lab)
+* ingress routing functions correctly based on hostname
 
 ![k8s nodes/pods](screenshots/kubernetes/01-k8s-nodes-pods-services.png)
 
